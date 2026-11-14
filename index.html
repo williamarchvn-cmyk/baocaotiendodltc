@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f172a" />
+    <title>Báo cáo Tiến độ Đại lý Tiêu chuẩn</title>
+    <meta name="description" content="Hệ thống quản lý và báo cáo tiến độ các đại lý tiêu chuẩn Hoa Sen Home đang thi công, hỗ trợ xuất báo cáo PDF chuyên nghiệp." />
+    <meta property="og:title" content="Báo cáo Tiến độ Đại lý Tiêu chuẩn" />
+    <meta property="og:description" content="Hệ thống quản lý và báo cáo tiến độ các đại lý tiêu chuẩn Hoa Sen Home đang thi công, hỗ trợ xuất báo cáo PDF chuyên nghiệp." />
+    <link rel="preconnect" href="%VITE_SUPABASE_URL%" crossorigin />
+    <script>
+      // Gọi dữ liệu NGAY khi trang mở, song song với việc tải mã nguồn (không chờ React khởi động).
+      (function () {
+        var u = '%VITE_SUPABASE_URL%', k = '%VITE_SUPABASE_ANON_KEY%';
+        if (u.indexOf('http') !== 0 || !k || k.charAt(0) === '%') return;
+        window.__dltcEarly = fetch(
+          u + '/rest/v1/agencies?select=id,unit,title,start_date,notes,images&order=created_at.desc&limit=1000',
+          { headers: { apikey: k } }
+        ).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
