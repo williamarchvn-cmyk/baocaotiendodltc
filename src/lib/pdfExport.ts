@@ -20,13 +20,66 @@ const PAGE_WIDTH = 800;
 const PAGE_HEIGHT = 1130;
 
 
+let cachedShiftEm: number | null = null;
+
 /**
- * html2canvas vẽ chữ thấp hơn vị trí thật vài px với font có dấu tiếng Việt cao (Be Vietnam Pro),
- * làm chữ lệch so với chấm tròn / khung. Hàm này nâng toàn bộ chữ lên đúng một lượng tỉ lệ theo cỡ chữ
- * (position: relative chỉ dời nét vẽ, không đổi bố cục) để chữ nằm thẳng hàng như trên màn hình.
+ * Đo độ lệch chữ của html2canvas NGAY TRÊN MÁY ĐANG DÙNG (mỗi máy / mỗi mức phóng to màn hình lệch khác nhau):
+ * vẽ chữ "H" cỡ 40px bằng html2canvas, so vị trí nét chữ với vị trí đúng do trình duyệt tính, rồi đổi ra đơn vị em.
  */
-const TEXT_NUDGE_EM = 0.5;
-function fixTextBaseline(root: HTMLElement): void {
+async function measureTextShiftEm(): Promise<number> {
+  if (cachedShiftEm !== null) return cachedShiftEm;
+  let shift = 0;
+  const probe = document.createElement('div');
+  try {
+    if (document.fonts?.ready) await document.fonts.ready;
+    const family = getComputedStyle(document.body).fontFamily;
+    const SIZE = 40;
+    const BOX = 100;
+    probe.style.cssText =
+      `position:absolute;left:-9999px;top:0;width:200px;height:${BOX}px;margin:0;padding:0;` +
+      `background:#ffffff;color:#000000;font-family:${family};font-weight:700;font-size:${SIZE}px;line-height:${BOX}px;`;
+    probe.textContent = 'H';
+    document.body.appendChild(probe);
+
+    const shot = await withColorShim(() => html2canvas(probe, { scale: 1, backgroundColor: '#ffffff', logging: false }));
+    const ctx = shot.getContext('2d');
+    if (!ctx) throw new Error('no ctx');
+    const { data, width, height } = ctx.getImageData(0, 0, shot.width, shot.height);
+    let inkTop = -1;
+    for (let y = 0; y < height && inkTop < 0; y++) {
+      for (let x = 0; x < width; x++) {
+        if (data[(y * width + x) * 4] < 128) { inkTop = y; break; }
+      }
+    }
+
+    const m = document.createElement('canvas').getContext('2d')!;
+    m.font = `700 ${SIZE}px ${family}`;
+    const t = m.measureText('H');
+    const asc = t.fontBoundingBoxAscent;
+    const desc = t.fontBoundingBoxDescent;
+    const cap = t.actualBoundingBoxAscent;
+    if (inkTop >= 0 && asc && cap) {
+      const expected = (BOX - (asc + desc)) / 2 + asc - cap;
+      shift = (inkTop - expected) / SIZE;
+      if (!isFinite(shift) || Math.abs(shift) > 0.8) shift = 0; // đo bất thường → không chỉnh
+    }
+  } catch (e) {
+    console.warn('Không đo được độ lệch chữ, bỏ qua bước căn chỉnh:', e);
+    shift = 0;
+  } finally {
+    probe.remove();
+  }
+  cachedShiftEm = shift;
+  return shift;
+}
+
+/**
+ * html2canvas vẽ chữ lệch so với vị trí thật (tùy máy), làm chữ lệch khỏi chấm tròn / khung.
+ * Dời toàn bộ chữ đúng bằng độ lệch đo được (position: relative chỉ dời nét vẽ, không đổi bố cục).
+ */
+async function fixTextBaseline(root: HTMLElement): Promise<void> {
+  const shiftEm = await measureTextShiftEm();
+  if (Math.abs(shiftEm) < 0.02) return;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const nodes: Text[] = [];
   while (walker.nextNode()) {
@@ -36,7 +89,7 @@ function fixTextBaseline(root: HTMLElement): void {
   nodes.forEach((n) => {
     const span = document.createElement('span');
     span.style.position = 'relative';
-    span.style.top = `-${TEXT_NUDGE_EM}em`;
+    span.style.top = `${(-shiftEm).toFixed(4)}em`;
     n.parentNode!.insertBefore(span, n);
     span.appendChild(n);
   });
@@ -311,7 +364,7 @@ export async function exportTabToPDF(
     }
 
     // Wait for all images in the container to complete loading
-    fixTextBaseline(container);
+    await fixTextBaseline(container);
     await waitForImages(container);
 
     // Initialize jsPDF
@@ -628,7 +681,7 @@ export async function exportFullReportToPDF(
     });
 
     // Wait for all images in container to load
-    fixTextBaseline(container);
+    await fixTextBaseline(container);
     await waitForImages(container);
 
     // Create jsPDF
