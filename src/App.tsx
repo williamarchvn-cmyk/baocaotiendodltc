@@ -825,13 +825,6 @@ export default function App() {
       <header className="md:sticky md:top-0 z-40 bg-slate-900/95 md:bg-slate-900/90 md:backdrop-blur-xl border-b border-slate-800/60 text-white shadow-xl no-print pt-[env(safe-area-inset-top)]">
         <div className="max-w-[1440px] mx-auto px-3 sm:px-8 py-3 sm:py-4 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 md:gap-4">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <img
-              src="/logo.png"
-              alt="Hoa Sen Home"
-              width={48}
-              height={48}
-              className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl shrink-0 shadow-lg shadow-black/30 ring-1 ring-white/10"
-            />
             <div className="min-w-0">
               <h1 className="text-[15px] sm:text-xl font-bold tracking-[-0.01em] uppercase text-white flex flex-wrap items-center gap-x-2.5 gap-y-1 leading-tight">
                 <span>BÁO CÁO TIẾN ĐỘ ĐẠI LÝ TIÊU CHUẨN</span>
