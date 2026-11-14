@@ -827,13 +827,13 @@ export default function App() {
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
             <div className="min-w-0">
               <h1 className="text-[15px] sm:text-xl font-bold tracking-[-0.01em] uppercase text-white flex flex-wrap items-center gap-x-2.5 gap-y-1 leading-tight">
-                <span>BÁO CÁO TIẾN ĐỘ ĐẠI LÝ TIÊU CHUẨN</span>
+                <span>BÁO CÁO TIẾN ĐỘ ĐẠI LÝ TIÊU CHUẨN/ ĐẠI LÝ CHUYÊN NGÀNH</span>
                 <span className="inline-flex items-center gap-1.5 text-[10px] bg-emerald-400/10 px-2 py-0.5 rounded-full text-emerald-300 font-semibold border border-emerald-400/20 tracking-wide whitespace-nowrap"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>ĐANG THI CÔNG</span>
               </h1>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+          <div className="flex flex-wrap md:flex-nowrap md:shrink-0 items-center justify-end gap-2 sm:gap-3">
             {/* Đăng nhập / Đăng xuất */}
             {canEdit ? (
               <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl pl-3 pr-1 py-1 min-w-0">
@@ -1129,11 +1129,6 @@ export default function App() {
 
         </div>
       </main>
-
-      {/* Corporate footer */}
-      <footer className="bg-[#941317] text-white/85 text-center py-5 px-3 border-t border-[#7a0f12] text-[11px] sm:text-xs font-medium uppercase tracking-[0.12em] mt-auto z-10 no-print pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-        BAN PHÁT TRIỂN ĐẠI LÝ TIÊU CHUẨN HOA SEN HOME
-      </footer>
 
       {/* Hộp đăng nhập */}
       {showLogin && <LoginModal onClose={() => setShowLogin(false)} onSignIn={signIn} />}
