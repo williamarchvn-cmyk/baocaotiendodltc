@@ -28,8 +28,10 @@ export function useAuth() {
     if (error) throw error;
   }, []);
 
+  // scope 'local': chỉ đăng xuất trên máy này. Mặc định của Supabase ('global') sẽ đăng xuất
+  // TẤT CẢ các máy đang dùng chung tài khoản → người khác bị mất quyền sửa giữa chừng.
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: 'local' });
   }, []);
 
   return { session, user: session?.user ?? null, loading, signIn, signOut };
