@@ -139,6 +139,7 @@ export default function App() {
   const exportMenuRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const tabBarRef = useRef<HTMLDivElement>(null);
   const currentDateDisplay = new Date().toLocaleDateString('vi-VN');
 
   // Ghi dữ liệu chờ (debounce) + các lệnh thêm mới đang bay
@@ -397,9 +398,13 @@ export default function App() {
     };
   }, [lightboxRowId, showLogin]);
 
-  // Cuộn tab đang chọn vào giữa thanh tab (hữu ích trên điện thoại)
+  // Cuộn tab đang chọn vào giữa THANH TAB (chỉ cuộn thanh tab, không kéo lệch cả trang).
   useEffect(() => {
-    tabRefs.current[currentTabId]?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+    const bar = tabBarRef.current;
+    const tab = tabRefs.current[currentTabId];
+    if (!bar || !tab || bar.scrollWidth <= bar.clientWidth) return;
+    const left = tab.offsetLeft - (bar.clientWidth - tab.offsetWidth) / 2;
+    bar.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
   }, [currentTabId]);
 
   // Tải sẵn ảnh kế trước / kế sau để chuyển ảnh trong chế độ phóng to không phải chờ
@@ -797,7 +802,7 @@ export default function App() {
       <div className="min-h-[100dvh] flex items-center justify-center bg-slate-100 p-6">
         <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-slate-200 p-8 text-center">
           <Info className="w-10 h-10 text-amber-500 mx-auto mb-3" />
-          <h1 className="text-lg font-extrabold text-slate-800 mb-2">Chưa cấu hình Supabase</h1>
+          <h1 className="text-lg font-semibold text-slate-800 mb-2">Chưa cấu hình Supabase</h1>
           <p className="text-sm text-slate-500 leading-relaxed">
             Thiếu biến môi trường <code className="font-mono text-slate-700">VITE_SUPABASE_URL</code> và{' '}
             <code className="font-mono text-slate-700">VITE_SUPABASE_ANON_KEY</code>. Xem file README.md để khai báo rồi chạy lại.
@@ -810,7 +815,7 @@ export default function App() {
   const lightboxRow = lightboxRowId !== null ? findRow(lightboxRowId)?.row : undefined;
 
   return (
-    <div className="min-h-[100dvh] text-slate-800 flex flex-col bg-gradient-to-br from-[#f6f8fc] via-[#eef2f7] to-[#e0e7ff]/60 relative overflow-x-hidden selection:bg-indigo-100 font-sans">
+    <div className="min-h-[100dvh] text-slate-800 flex flex-col bg-gradient-to-br from-[#f6f8fc] via-[#eef2f7] to-[#e0e7ff]/60 relative overflow-x-clip selection:bg-indigo-100 font-sans">
 
       {/* Decorative ambient background orbs (ẩn trên điện thoại để mượt hơn) */}
       <div className="hidden md:block absolute top-[20%] -left-[10%] w-[600px] h-[600px] bg-blue-300/10 rounded-full blur-[140px] pointer-events-none"></div>
@@ -820,13 +825,17 @@ export default function App() {
       <header className="md:sticky md:top-0 z-40 bg-slate-900/95 md:bg-slate-900/90 md:backdrop-blur-xl border-b border-slate-800/60 text-white shadow-xl no-print pt-[env(safe-area-inset-top)]">
         <div className="max-w-[1440px] mx-auto px-3 sm:px-8 py-3 sm:py-4 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 md:gap-4">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <div className="bg-gradient-to-br from-red-500 to-red-600 p-2 sm:p-3 rounded-xl border border-red-400 shadow-lg shadow-red-600/20 flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 shrink-0 transition-transform hover:scale-105 duration-300">
-              <span className="text-white font-black text-base sm:text-lg tracking-wider">HSH</span>
-            </div>
+            <img
+              src="/logo.png"
+              alt="Hoa Sen Home"
+              width={48}
+              height={48}
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl shrink-0 shadow-lg shadow-black/30 ring-1 ring-white/10"
+            />
             <div className="min-w-0">
-              <h1 className="text-sm sm:text-xl font-extrabold tracking-wide sm:tracking-wider uppercase drop-shadow-sm text-white flex flex-wrap items-center gap-x-2 gap-y-1 leading-tight">
+              <h1 className="text-[15px] sm:text-xl font-bold tracking-[-0.01em] uppercase text-white flex flex-wrap items-center gap-x-2.5 gap-y-1 leading-tight">
                 <span>BÁO CÁO TIẾN ĐỘ ĐẠI LÝ TIÊU CHUẨN</span>
-                <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded text-slate-300 font-normal normal-case border border-white/5 tracking-normal whitespace-nowrap">ĐANG THI CÔNG</span>
+                <span className="inline-flex items-center gap-1.5 text-[10px] bg-emerald-400/10 px-2 py-0.5 rounded-full text-emerald-300 font-semibold border border-emerald-400/20 tracking-wide whitespace-nowrap"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>ĐANG THI CÔNG</span>
               </h1>
             </div>
           </div>
@@ -863,7 +872,7 @@ export default function App() {
                   onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
                   className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase px-3.5 sm:px-4 py-2.5 rounded-xl shadow-lg shadow-red-600/20 transition-all duration-300 flex items-center gap-1.5 cursor-pointer border border-red-500"
                 >
-                  <Download className="w-3.5 h-3.5 animate-bounce" />
+                  <Download className="w-4 h-4" />
                   <span>XUẤT BÁO CÁO PDF</span>
                 </button>
 
@@ -877,7 +886,7 @@ export default function App() {
                       className="absolute right-0 mt-2 w-72 max-w-[calc(100vw-1.5rem)] bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden text-slate-800 py-2 z-50"
                     >
                       <div className="px-4 py-2 border-b border-slate-50">
-                        <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Tùy chọn tải về</span>
+                        <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wide">Tùy chọn tải về</span>
                       </div>
 
                       {currentTabId !== 'tong_quan' && (
@@ -887,7 +896,7 @@ export default function App() {
                         >
                           <FileText className="w-4 h-4 text-slate-400 group-hover:text-red-500 mt-0.5" />
                           <div>
-                            <span className="block text-xs font-extrabold text-slate-800">Xuất PDF ĐVKD Hiện Tại</span>
+                            <span className="block text-xs font-semibold text-slate-800">Xuất PDF ĐVKD Hiện Tại</span>
                             <span className="block text-[10px] text-slate-400">In riêng báo cáo cho {activeTabConfig?.name}</span>
                           </div>
                         </button>
@@ -899,7 +908,7 @@ export default function App() {
                       >
                         <Layers className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 mt-0.5" />
                         <div>
-                          <span className="block text-xs font-extrabold text-slate-800">Lập Báo Cáo Tổng Hợp Toàn Quốc</span>
+                          <span className="block text-xs font-semibold text-slate-800">Lập Báo Cáo Tổng Hợp Toàn Quốc</span>
                           <span className="block text-[10px] text-slate-400">Gồm trang bìa, biểu đồ phân tích và tất cả ĐVKD</span>
                         </div>
                       </button>
@@ -910,7 +919,7 @@ export default function App() {
             )}
 
             <div className="hidden lg:flex bg-white/5 px-4 py-2.5 rounded-xl text-xs font-medium border border-white/10 items-center gap-2 shadow-inner">
-              <Clock className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+              <Clock className="w-4 h-4 text-amber-300" />
               <span className="text-slate-300">Ngày <span className="font-bold text-white">{currentDateDisplay}</span></span>
             </div>
           </div>
@@ -922,14 +931,14 @@ export default function App() {
 
         {/* Dải thông báo chế độ chỉ-xem */}
         {!canEdit && isDataLoaded && (
-          <div className="no-print flex items-center gap-2 bg-white/70 border border-slate-200/80 rounded-xl px-3.5 py-2 text-[11px] sm:text-xs font-semibold text-slate-500">
+          <div className="no-print flex items-center gap-2 bg-white/70 border border-slate-200/80 rounded-xl px-3.5 py-2 text-[11px] sm:text-sm font-semibold text-slate-500">
             <Eye className="w-3.5 h-3.5 shrink-0 text-slate-400" />
             <span>Bạn đang ở chế độ chỉ xem. Đăng nhập để thêm, sửa hoặc xóa dữ liệu.</span>
           </div>
         )}
 
         {/* Navigation Tabs Bar */}
-        <div className="bg-white/60 md:bg-white/40 md:backdrop-blur-md p-1.5 sm:p-2 rounded-2xl shadow-lg border border-white/60 overflow-x-auto custom-scrollbar flex gap-1.5 sm:gap-2 no-print snap-x">
+        <div ref={tabBarRef} className="relative bg-white/60 md:bg-white/40 md:backdrop-blur-md p-1.5 sm:p-2 rounded-2xl shadow-lg border border-white/60 overflow-x-auto no-scrollbar flex gap-1.5 sm:gap-2 no-print snap-x">
           {TAB_CONFIGS.map((tab) => {
             const isSelected = currentTabId === tab.id;
             const dotColor = tab.textColor.replace('text-', 'bg-');
@@ -945,7 +954,7 @@ export default function App() {
                   setCurrentTabId(tab.id);
                   setSearchQuery('');
                 }}
-                className={`snap-center flex-1 min-w-[108px] sm:min-w-[125px] text-center py-3 sm:py-3.5 px-3 sm:px-4 rounded-xl text-[11px] sm:text-xs uppercase tracking-wider font-bold transition-all duration-300 cursor-pointer whitespace-nowrap border flex items-center justify-center gap-1.5 sm:gap-2 ${
+                className={`snap-center flex-1 min-w-[108px] sm:min-w-[125px] text-center py-3 sm:py-3.5 px-3 sm:px-4 rounded-xl text-[11px] sm:text-sm uppercase tracking-wide font-bold transition-all duration-300 cursor-pointer whitespace-nowrap border flex items-center justify-center gap-1.5 sm:gap-2 ${
                   isSelected
                     ? `${tab.activeColor} shadow-md ring-2 sm:ring-4 sm:scale-[1.02] border-slate-300/60`
                     : `bg-white/30 hover:bg-white/60 text-slate-600 hover:text-slate-900 border-white/40`
@@ -953,7 +962,7 @@ export default function App() {
               >
                 <span className={`w-2 h-2 rounded-full ${dotColor} shadow-xs shrink-0`}></span>
                 <span>{tab.name}</span>
-                <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${isSelected ? 'bg-slate-900/10 text-slate-900' : 'bg-slate-400/10 text-slate-500'}`}>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${isSelected ? 'bg-slate-900/10 text-slate-900' : 'bg-slate-400/10 text-slate-500'}`}>
                   {totalItemsCount}
                 </span>
               </button>
@@ -983,14 +992,14 @@ export default function App() {
                   className="flex-grow flex flex-col gap-5 sm:gap-8"
                 >
                   <div className="text-center">
-                    <h2 className="text-sm sm:text-lg font-extrabold text-slate-800 tracking-tight flex items-center justify-center gap-2 px-2">
+                    <h2 className="text-sm sm:text-lg font-semibold text-slate-800 tracking-tight flex items-center justify-center gap-2 px-2">
                       <Layers className="w-5 h-5 text-indigo-500 shrink-0" />
                       <span>Biểu đồ số lượng ĐLTC đang thi công theo ĐVKD</span>
                     </h2>
 
                     <div className="mt-3 inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 bg-white/80 backdrop-blur-sm border border-slate-200/80 px-4 sm:px-6 py-2 rounded-full shadow-sm">
-                      <span className="text-slate-500 text-[10px] sm:text-xs uppercase tracking-widest font-bold">Tổng số đại lý đang thi công toàn quốc:</span>
-                      <span className="text-lg font-black text-slate-800 font-mono">{grandTotal}</span>
+                      <span className="text-slate-500 text-[10px] sm:text-sm uppercase tracking-wide font-bold">Tổng số đại lý đang thi công toàn quốc:</span>
+                      <span className="text-lg font-bold text-slate-800 font-mono">{grandTotal}</span>
                     </div>
                   </div>
 
@@ -1005,7 +1014,7 @@ export default function App() {
                     {/* Numeric breakdown quicklist */}
                     <div className="lg:col-span-4 flex flex-col gap-4">
                       <div className="bg-white/80 p-4 sm:p-5 rounded-2xl border border-white/80 shadow-md">
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-1.5">
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-4 flex items-center gap-1.5">
                           <CheckCircle className="w-4 h-4 text-slate-400" />
                           <span>Chi tiết phân bổ</span>
                         </h3>
@@ -1023,11 +1032,11 @@ export default function App() {
                               >
                                 <div className="flex items-center gap-2">
                                   <span className={`w-2.5 h-2.5 rounded-full ${bgC} shadow-xs`}></span>
-                                  <span className="text-xs font-extrabold text-slate-700">{tab.name}</span>
+                                  <span className="text-xs font-semibold text-slate-700">{tab.name}</span>
                                 </div>
                                 <div className="flex items-center gap-3">
                                   <span className="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-0.5 rounded-md">{percentage}%</span>
-                                  <span className="text-sm font-black text-slate-800 font-mono w-6 text-right">{count}</span>
+                                  <span className="text-sm font-bold text-slate-800 font-mono w-6 text-right">{count}</span>
                                 </div>
                               </button>
                             );
@@ -1053,7 +1062,7 @@ export default function App() {
                     <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-grow">
                       <div className="flex items-center gap-3">
                         <div className={`w-2.5 h-7 rounded-full ${activeTabConfig?.textColor.replace('text-', 'bg-')}`}></div>
-                        <h3 className="text-lg font-extrabold text-slate-800 tracking-tight">{activeTabConfig?.name}</h3>
+                        <h3 className="text-lg font-semibold text-slate-800 tracking-tight">{activeTabConfig?.name}</h3>
                         <span className="px-3.5 py-1 bg-white border border-slate-200 text-slate-700 rounded-full text-xs font-bold shadow-xs">
                           {appData[currentTabId as UnitId]?.length || 0} ĐLTC
                         </span>
@@ -1069,7 +1078,7 @@ export default function App() {
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           placeholder="Tìm kiếm ĐLTC đang thi công..."
-                          className="w-full pl-9 pr-9 py-2.5 sm:py-2 bg-white/95 border border-slate-200 rounded-xl text-base sm:text-xs font-medium placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400/50 focus:bg-white transition-all duration-300 shadow-xs [&::-webkit-search-cancel-button]:hidden"
+                          className="w-full pl-9 pr-9 py-2.5 sm:py-2 bg-white/95 border border-slate-200 rounded-xl text-base sm:text-sm font-medium placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400/50 focus:bg-white transition-all duration-300 shadow-xs [&::-webkit-search-cancel-button]:hidden"
                         />
                         {searchQuery && (
                           <button
@@ -1129,7 +1138,7 @@ export default function App() {
       </main>
 
       {/* Corporate footer */}
-      <footer className="bg-slate-950 text-slate-500 text-center py-5 px-3 border-t border-slate-900 text-[10px] sm:text-[11px] uppercase tracking-wider mt-auto z-10 no-print pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+      <footer className="bg-[#941317] text-white/85 text-center py-5 px-3 border-t border-[#7a0f12] text-[11px] sm:text-xs font-medium uppercase tracking-[0.12em] mt-auto z-10 no-print pb-[max(1.25rem,env(safe-area-inset-bottom))]">
         BAN PHÁT TRIỂN ĐẠI LÝ TIÊU CHUẨN HOA SEN HOME
       </footer>
 
@@ -1186,7 +1195,7 @@ export default function App() {
               </button>
             )}
 
-            <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] sm:bottom-6 left-1/2 -translate-x-1/2 text-white/80 text-xs font-bold tracking-widest uppercase bg-slate-900/80 px-5 py-2 rounded-full backdrop-blur-sm shadow-xl border border-slate-700/60 font-mono">
+            <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] sm:bottom-6 left-1/2 -translate-x-1/2 text-white/80 text-xs font-bold tracking-wide uppercase bg-slate-900/80 px-5 py-2 rounded-full backdrop-blur-sm shadow-xl border border-slate-700/60 font-mono">
               {idx + 1} / {totalImg}
             </div>
           </div>
@@ -1204,7 +1213,7 @@ export default function App() {
           >
             <div className="bg-white p-6 sm:p-8 rounded-3xl max-w-sm w-full text-center shadow-2xl border border-slate-100 mx-4">
               <Loader2 className="w-12 h-12 text-red-600 animate-spin mx-auto mb-4" />
-              <h3 className="text-slate-900 font-extrabold text-base uppercase tracking-wider mb-2">Đang kết xuất PDF</h3>
+              <h3 className="text-slate-900 font-semibold text-base uppercase tracking-wide mb-2">Đang kết xuất PDF</h3>
               {isExportingVisuals && currentExportingTabName && (
                 <div className="bg-slate-50 text-slate-700 text-xs font-bold py-1.5 px-3.5 rounded-lg inline-flex items-center gap-2 border border-slate-100 mb-3 animate-pulse">
                   <span className="w-2 h-2 rounded-full bg-red-500"></span>
@@ -1226,7 +1235,7 @@ export default function App() {
                   transition={{ duration: 0.1 }}
                 />
               </div>
-              <span className="text-xs font-black text-slate-700 font-mono">{exportProgress}%</span>
+              <span className="text-xs font-bold text-slate-700 font-mono">{exportProgress}%</span>
             </div>
           </motion.div>
         )}

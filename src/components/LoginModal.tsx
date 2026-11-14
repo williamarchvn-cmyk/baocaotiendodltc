@@ -69,12 +69,12 @@ export default function LoginModal({ onClose, onSignIn }: Props) {
             <LogIn className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h3 className="text-slate-900 font-extrabold text-base uppercase tracking-wider">Đăng nhập</h3>
+            <h3 className="text-slate-900 font-semibold text-base uppercase tracking-wide">Đăng nhập</h3>
             <p className="text-slate-400 text-xs font-medium">Dành cho người được cấp quyền chỉnh sửa</p>
           </div>
         </div>
 
-        <label className="block text-[11px] uppercase tracking-wider font-extrabold text-slate-400 mb-1">Email</label>
+        <label className="block text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1">Email</label>
         <input
           ref={emailRef}
           type="email"
@@ -85,7 +85,7 @@ export default function LoginModal({ onClose, onSignIn }: Props) {
           className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-base sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400/40 mb-4"
         />
 
-        <label className="block text-[11px] uppercase tracking-wider font-extrabold text-slate-400 mb-1">Mật khẩu</label>
+        <label className="block text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1">Mật khẩu</label>
         <input
           type="password"
           required

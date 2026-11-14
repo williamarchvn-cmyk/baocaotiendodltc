@@ -1,16 +1,42 @@
-/* Font tự lưu trữ (không phụ thuộc Google Fonts): nhanh hơn, được cache vĩnh viễn cùng tên miền */
-@import "@fontsource-variable/plus-jakarta-sans/wght.css";
-@import "@fontsource-variable/jetbrains-mono/wght.css";
+/* Be Vietnam Pro: font thiết kế riêng cho tiếng Việt (dấu cân đối, rõ ở cỡ nhỏ). Tự lưu trữ, cache vĩnh viễn. */
+@import "@fontsource/be-vietnam-pro/400.css";
+@import "@fontsource/be-vietnam-pro/500.css";
+@import "@fontsource/be-vietnam-pro/600.css";
+@import "@fontsource/be-vietnam-pro/700.css";
+@import "@fontsource/be-vietnam-pro/800.css";
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "Be Vietnam Pro", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
   font-family: var(--font-sans);
   scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv11", "ss01";
+}
+
+/* Con số thẳng cột (ngày, số lượng) */
+.font-mono {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Icon nét mảnh, đồng nhất */
+svg.lucide {
+  stroke-width: 1.75;
+}
+
+/* Ẩn thanh cuộn của thanh tab nhưng vẫn vuốt được */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* Custom Scrollbar */

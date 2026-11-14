@@ -67,7 +67,7 @@ function AgencyCard({ row, pending, canEdit, readOnly, actions }: Props) {
         onMouseLeave={() => actions.setHovered(null)}
         className="order-2 lg:order-1 lg:col-span-9 flex flex-col justify-between min-w-0"
       >
-        <label className="block text-[11px] uppercase tracking-wider font-extrabold text-slate-400 mb-2 flex items-center gap-1.5">
+        <label className="block text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-2 flex items-center gap-1.5">
           <ImageIcon className="w-3.5 h-3.5" />
           <span>Hình ảnh thực tế ({totalShown}/{MAX_IMAGES})</span>
         </label>
@@ -198,7 +198,7 @@ function AgencyCard({ row, pending, canEdit, readOnly, actions }: Props) {
                   className="relative aspect-square border border-dashed border-slate-300 hover:border-slate-400 rounded-lg flex flex-col items-center justify-center text-slate-400 hover:text-slate-600 cursor-pointer bg-white/50 transition-all duration-300 hover:bg-white"
                 >
                   <Plus className="w-4 h-4" />
-                  <span className="text-[9px] font-bold mt-1">Thêm ảnh</span>
+                  <span className="text-[10px] font-bold mt-1">Thêm ảnh</span>
                 </div>
               )}
             </div>
@@ -222,12 +222,12 @@ function AgencyCard({ row, pending, canEdit, readOnly, actions }: Props) {
 
         {/* Title Name */}
         <div className={canEdit ? 'pr-9' : ''}>
-          <label className="block text-[11px] uppercase tracking-wider font-extrabold text-slate-400 mb-1 flex items-center gap-1">
+          <label className="block text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1 flex items-center gap-1">
             <Briefcase className="w-3 h-3" />
             <span>ĐẠI LÝ TIÊU CHUẨN</span>
           </label>
           {readOnly ? (
-            <div className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm sm:text-xs font-bold text-slate-800 bg-slate-50 min-h-[32px] flex items-center break-words">
+            <div className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm sm:text-sm font-bold text-slate-800 bg-slate-50 min-h-[32px] flex items-center break-words">
               {row.title || <span className="text-slate-400 italic font-normal">(Chưa nhập tên đại lý)</span>}
             </div>
           ) : (
@@ -238,7 +238,7 @@ function AgencyCard({ row, pending, canEdit, readOnly, actions }: Props) {
               onChange={(e) => actions.updateField(row.id, 'title', e.target.value)}
               onBlur={() => actions.flushRow(row.id)}
               placeholder="Nhập tên đại lý..."
-              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 sm:py-2 text-base sm:text-xs font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400/40 bg-white/85 shadow-xs transition-all duration-300"
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 sm:py-2 text-base sm:text-sm font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400/40 bg-white/85 shadow-xs transition-all duration-300"
             />
           )}
         </div>
@@ -246,12 +246,12 @@ function AgencyCard({ row, pending, canEdit, readOnly, actions }: Props) {
         {/* Date & Elapsed Time */}
         <div className="grid grid-cols-2 gap-2">
           <div className="min-w-0">
-            <label className="block text-[11px] uppercase tracking-wider font-extrabold text-slate-400 mb-1 flex items-center gap-1">
+            <label className="block text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1 flex items-center gap-1">
               <Calendar className="w-3 h-3" />
               <span>Bắt đầu</span>
             </label>
             {readOnly ? (
-              <div className="w-full border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs sm:text-[11px] text-slate-700 font-bold bg-slate-50 min-h-[32px] flex items-center">
+              <div className="w-full border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs sm:text-sm text-slate-700 font-bold bg-slate-50 min-h-[32px] flex items-center">
                 {formatViDate(row.startDate)}
               </div>
             ) : (
@@ -259,7 +259,7 @@ function AgencyCard({ row, pending, canEdit, readOnly, actions }: Props) {
                 type="date"
                 value={toInputDateFormat(row.startDate)}
                 onChange={(e) => actions.updateField(row.id, 'startDate', e.target.value)}
-                className="w-full min-w-0 border border-slate-200 rounded-xl px-2.5 py-2 sm:py-1.5 text-base sm:text-[11px] text-slate-700 font-bold focus:outline-none focus:ring-2 focus:ring-slate-400/40 bg-white/85 shadow-xs transition-all duration-300"
+                className="w-full min-w-0 border border-slate-200 rounded-xl px-2.5 py-2 sm:py-1.5 text-base sm:text-[13px] text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-slate-400/40 bg-white/85 shadow-xs transition-all duration-300"
               />
             )}
           </div>
@@ -267,19 +267,19 @@ function AgencyCard({ row, pending, canEdit, readOnly, actions }: Props) {
           <div className="bg-white/80 border border-slate-200 px-2 rounded-xl flex items-center justify-center min-h-[36px] sm:h-[32px] self-end mb-[1px] shadow-xs">
             <span className="text-[10px] font-bold text-slate-600 tracking-tight flex items-center gap-1 whitespace-nowrap">
               <Clock className="w-3.5 h-3.5 text-slate-400" />
-              <span>Đã làm: <span className="text-xs font-black underline mx-0.5 font-mono text-slate-800">{calculateElapsedDays(row.startDate)}</span> ngày</span>
+              <span>Đã làm: <span className="text-xs font-bold underline mx-0.5 font-mono text-slate-800">{calculateElapsedDays(row.startDate)}</span> ngày</span>
             </span>
           </div>
         </div>
 
         {/* Notes Content */}
         <div className="flex-grow flex flex-col">
-          <label className="block text-[11px] uppercase tracking-wider font-extrabold text-slate-400 mb-1 flex items-center gap-1">
+          <label className="block text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1 flex items-center gap-1">
             <HelpCircle className="w-3 h-3" />
             <span>Nội dung vướng mắc</span>
           </label>
           {readOnly ? (
-            <div className="w-full flex-grow border border-slate-200 rounded-xl px-3 py-2 text-sm sm:text-xs text-slate-700 bg-slate-50 min-h-[90px] whitespace-pre-wrap break-words leading-relaxed">
+            <div className="w-full flex-grow border border-slate-200 rounded-xl px-3 py-2 text-sm sm:text-sm text-slate-700 bg-slate-50 min-h-[90px] whitespace-pre-wrap break-words leading-relaxed">
               {row.notes || <span className="text-slate-400 italic font-normal">Chưa có nội dung vướng mắc</span>}
             </div>
           ) : (
@@ -288,7 +288,7 @@ function AgencyCard({ row, pending, canEdit, readOnly, actions }: Props) {
               onChange={(e) => actions.updateField(row.id, 'notes', e.target.value)}
               onBlur={() => actions.flushRow(row.id)}
               placeholder="Nhập nội dung vướng mắc hoặc ghi chú..."
-              className="w-full flex-grow border border-slate-200 rounded-xl px-3 py-2 text-base sm:text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400/40 bg-white/85 shadow-xs resize-none min-h-[110px] sm:min-h-[90px] custom-scrollbar transition-all duration-300"
+              className="w-full flex-grow border border-slate-200 rounded-xl px-3 py-2 text-base sm:text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400/40 bg-white/85 shadow-xs resize-none min-h-[110px] sm:min-h-[90px] custom-scrollbar transition-all duration-300"
             />
           )}
         </div>
