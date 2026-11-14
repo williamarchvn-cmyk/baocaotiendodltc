@@ -19,6 +19,29 @@ const chunkArray = <T>(array: T[], size: number): T[][] => {
 const PAGE_WIDTH = 800;
 const PAGE_HEIGHT = 1130;
 
+
+/**
+ * html2canvas vẽ chữ thấp hơn vị trí thật vài px với font có dấu tiếng Việt cao (Be Vietnam Pro),
+ * làm chữ lệch so với chấm tròn / khung. Hàm này nâng toàn bộ chữ lên đúng một lượng tỉ lệ theo cỡ chữ
+ * (position: relative chỉ dời nét vẽ, không đổi bố cục) để chữ nằm thẳng hàng như trên màn hình.
+ */
+const TEXT_NUDGE_EM = 0.5;
+function fixTextBaseline(root: HTMLElement): void {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes: Text[] = [];
+  while (walker.nextNode()) {
+    const n = walker.currentNode as Text;
+    if (n.nodeValue && n.nodeValue.trim() && n.parentElement && n.parentElement.tagName !== 'STYLE') nodes.push(n);
+  }
+  nodes.forEach((n) => {
+    const span = document.createElement('span');
+    span.style.position = 'relative';
+    span.style.top = `-${TEXT_NUDGE_EM}em`;
+    n.parentNode!.insertBefore(span, n);
+    span.appendChild(n);
+  });
+}
+
 // Wait for all images in an element to load
 const waitForImages = (element: HTMLElement): Promise<void[]> => {
   const images = element.querySelectorAll('img');
@@ -288,6 +311,7 @@ export async function exportTabToPDF(
     }
 
     // Wait for all images in the container to complete loading
+    fixTextBaseline(container);
     await waitForImages(container);
 
     // Initialize jsPDF
@@ -502,18 +526,10 @@ export async function exportFullReportToPDF(
                 const count = appData[c.id as keyof AppData]?.length || 0;
                 const maxCount = Math.max(...configs.filter(x => !x.isOverview).map(x => appData[x.id as keyof AppData]?.length || 0), 1);
                 const heightPercent = Math.max(8, Math.round((count / maxCount) * 85)); // minimum 8% for visibility
-                const barBgColor = 
-                  c.id === 'hsh_mb' ? 'bg-blue-500' :
-                  c.id === 'hsh_mt' ? 'bg-emerald-500' :
-                  c.id === 'hsh_mn' ? 'bg-purple-500' :
-                  c.id === 'pkd_mb' ? 'bg-amber-500' :
-                  c.id === 'pkd_mn' ? 'bg-rose-500' :
-                  'bg-fuchsia-500';
-
                 return `
                   <div class="flex flex-col items-center flex-1 max-w-[80px]" style="height: 100%; justify-content: flex-end;">
                     <span class="text-[10px] font-extrabold text-slate-800 mb-2">${count} ĐLTC</span>
-                    <div class="w-10 rounded-t-lg ${barBgColor} shadow-sm" style="height: ${heightPercent}%;"></div>
+                    <div class="w-10 rounded-t-lg" style="height: ${heightPercent}%; background: rgba(147, 197, 253, 0.85); border: 1.5px solid rgba(96, 165, 250, 0.9); border-bottom: 0;"></div>
                     <span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider mt-3 text-center leading-tight whitespace-nowrap">${c.name}</span>
                   </div>
                 `;
@@ -612,6 +628,7 @@ export async function exportFullReportToPDF(
     });
 
     // Wait for all images in container to load
+    fixTextBaseline(container);
     await waitForImages(container);
 
     // Create jsPDF
