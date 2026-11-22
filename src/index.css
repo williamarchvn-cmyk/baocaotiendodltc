@@ -61,3 +61,26 @@ svg.lucide {
     display: none !important;
   }
 }
+
+/* Hiệu ứng xuất hiện của thẻ ĐLTC (thay cho thư viện animation → nhẹ hơn khi danh sách dài) */
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+}
+.card-enter {
+  animation: card-enter 0.2s ease-out backwards;
+}
+
+/* Thẻ nằm ngoài màn hình: trình duyệt bỏ qua việc dựng/vẽ cho tới khi cuộn tới → cuộn mượt, đỡ nóng máy */
+.agency-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 340px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-enter {
+    animation: none;
+  }
+}

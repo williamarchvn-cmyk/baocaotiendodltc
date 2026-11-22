@@ -7,6 +7,7 @@ import { calculateElapsedDays, todayLocalISO } from './lib/dateUtils';
 import { useAuth } from './hooks/useAuth';
 import LoginModal from './components/LoginModal';
 import ZoomableImage from './components/ZoomableImage';
+import { thumbUrl } from './lib/imageUtils';
 import AgencyCard, { CardActions, EditableField, MAX_IMAGES } from './components/AgencyCard';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -83,6 +84,18 @@ async function runLimited<T, R>(items: T[], limit: number, fn: (item: T) => Prom
   return results;
 }
 
+/** Hai dòng giống hệt nhau về nội dung hiển thị → dùng lại object cũ để thẻ không phải vẽ lại. */
+function sameRow(a: AgencyRow, b: AgencyRow): boolean {
+  return (
+    a.title === b.title &&
+    a.startDate === b.startDate &&
+    a.notes === b.notes &&
+    a.z === b.z &&
+    a.imagePaths.length === b.imagePaths.length &&
+    a.imagePaths.every((p, i) => p === b.imagePaths[i])
+  );
+}
+
 function normalizeCache(loaded: AppData): AppData {
   const fix = (list?: AgencyRow[]) =>
     (list || []).map((item) => ({
@@ -119,7 +132,11 @@ export default function App() {
   const pendingUploadsRef = useRef(pendingUploads);
   pendingUploadsRef.current = pendingUploads;
 
-  const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
+  // Thẻ đang được rê chuột (để dán ảnh). Dùng ref: rê chuột không làm vẽ lại cả trang.
+  const hoveredRowIdRef = useRef<string | null>(null);
+  const setHoveredRowId = useCallback((id: string | null) => {
+    hoveredRowIdRef.current = id;
+  }, []);
 
   // Lightbox Modal states
   const [lightboxRowId, setLightboxRowId] = useState<string | null>(null);
@@ -206,9 +223,22 @@ export default function App() {
     async (silent = false) => {
       try {
         const remote = await api.fetchAllAgencies();
-        const merged = api.emptyAppData();
-        for (const u of api.UNIT_IDS) merged[u] = remote[u].map(overlayPending);
-        setAppData(merged);
+        setAppData((prev) => {
+          const prevById = new Map<string, AgencyRow>();
+          for (const u of api.UNIT_IDS) for (const r of prev[u]) prevById.set(r.id, r);
+          const merged = api.emptyAppData();
+          let changed = false;
+          for (const u of api.UNIT_IDS) {
+            merged[u] = remote[u].map((raw) => {
+              const r = overlayPending(raw);
+              const old = prevById.get(r.id);
+              return old && sameRow(old, r) ? old : r;
+            });
+            if (merged[u].length !== prev[u].length || merged[u].some((r, i) => r !== prev[u][i])) changed = true;
+            else merged[u] = prev[u];
+          }
+          return changed ? merged : prev;
+        });
       } catch (e) {
         console.error('Không tải được dữ liệu từ Supabase:', e);
         if (!silent) {
@@ -455,6 +485,7 @@ export default function App() {
     const handleGlobalPaste = (e: ClipboardEvent) => {
       if (!canEdit) return;
       if (currentTabId === 'tong_quan') return;
+      const hoveredRowId = hoveredRowIdRef.current;
       if (!hoveredRowId) return;
 
       const items = e.clipboardData?.items;
@@ -477,7 +508,7 @@ export default function App() {
     };
     window.addEventListener('paste', handleGlobalPaste);
     return () => window.removeEventListener('paste', handleGlobalPaste);
-  }, [hoveredRowId, canEdit, currentTabId]);
+  }, [canEdit, currentTabId]);
 
   // ---------- Thao tác dữ liệu ----------
   const handleAddNewRow = () => {
@@ -818,12 +849,20 @@ export default function App() {
   return (
     <div className="min-h-[100dvh] text-slate-800 flex flex-col bg-gradient-to-br from-[#f6f8fc] via-[#eef2f7] to-[#e0e7ff]/60 relative overflow-x-clip selection:bg-indigo-100 font-sans">
 
-      {/* Decorative ambient background orbs (ẩn trên điện thoại để mượt hơn) */}
-      <div className="hidden md:block absolute top-[20%] -left-[10%] w-[600px] h-[600px] bg-blue-300/10 rounded-full blur-[140px] pointer-events-none"></div>
-      <div className="hidden md:block absolute bottom-[15%] -right-[10%] w-[700px] h-[700px] bg-purple-300/10 rounded-full blur-[160px] pointer-events-none"></div>
+      {/* Decorative ambient background orbs (ẩn trên điện thoại). Dùng gradient thay cho filter blur cỡ lớn → nhẹ GPU. */}
+      <div className="hidden md:block absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div
+          className="absolute rounded-full"
+          style={{ top: 'calc(20% - 280px)', left: 'calc(-10% - 280px)', width: 1160, height: 1160, background: 'radial-gradient(closest-side, rgba(147,197,253,0.10), rgba(147,197,253,0.05) 45%, rgba(147,197,253,0) 100%)' }}
+        ></div>
+        <div
+          className="absolute rounded-full"
+          style={{ bottom: 'calc(15% - 320px)', right: 'calc(-10% - 320px)', width: 1340, height: 1340, background: 'radial-gradient(closest-side, rgba(216,180,254,0.10), rgba(216,180,254,0.05) 45%, rgba(216,180,254,0) 100%)' }}
+        ></div>
+      </div>
 
       {/* Corporate header (dính đầu trang trên màn hình ≥ md) */}
-      <header className="md:sticky md:top-0 z-40 bg-slate-900/95 md:bg-slate-900/90 md:backdrop-blur-xl border-b border-slate-800/60 text-white shadow-xl no-print pt-[env(safe-area-inset-top)]">
+      <header className="md:sticky md:top-0 z-40 bg-slate-900/95 border-b border-slate-800/60 text-white shadow-xl no-print pt-[env(safe-area-inset-top)]">
         <div className="max-w-[1440px] mx-auto px-3 sm:px-8 py-3 sm:py-4 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 md:gap-4">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
             <div className="min-w-0">
@@ -932,7 +971,7 @@ export default function App() {
         )}
 
         {/* Navigation Tabs Bar */}
-        <div ref={tabBarRef} className="relative bg-white/60 md:bg-white/40 md:backdrop-blur-md p-1.5 sm:p-2 rounded-2xl shadow-lg border border-white/60 overflow-x-auto no-scrollbar flex gap-1.5 sm:gap-2 no-print snap-x">
+        <div ref={tabBarRef} className="relative bg-white/60 p-1.5 sm:p-2 rounded-2xl shadow-lg border border-white/60 overflow-x-auto no-scrollbar flex gap-1.5 sm:gap-2 no-print snap-x">
           {TAB_CONFIGS.map((tab) => {
             const isSelected = currentTabId === tab.id;
             const dotColor = tab.textColor.replace('text-', 'bg-');
@@ -965,7 +1004,7 @@ export default function App() {
         </div>
 
         {/* Main interactive workstation */}
-        <div id="main-workstation" className="bg-white/70 md:bg-white/60 md:backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-2xl border border-white/70 p-3 sm:p-6 lg:p-8 min-h-[420px] sm:min-h-[550px] flex flex-col">
+        <div id="main-workstation" className="bg-white/70 rounded-2xl sm:rounded-3xl shadow-2xl border border-white/70 p-3 sm:p-6 lg:p-8 min-h-[420px] sm:min-h-[550px] flex flex-col">
 
           {!isDataLoaded ? (
             <div className="flex-grow flex flex-col items-center justify-center py-20 text-slate-400">
@@ -991,7 +1030,7 @@ export default function App() {
                       <span>Biểu đồ số lượng ĐLTC đang thi công theo ĐVKD</span>
                     </h2>
 
-                    <div className="mt-3 inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 bg-white/80 backdrop-blur-sm border border-slate-200/80 px-4 sm:px-6 py-2 rounded-full shadow-sm">
+                    <div className="mt-3 inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 bg-white/80 border border-slate-200/80 px-4 sm:px-6 py-2 rounded-full shadow-sm">
                       <span className="text-slate-500 text-[10px] sm:text-sm uppercase tracking-wide font-bold">Tổng số đại lý đang thi công toàn quốc:</span>
                       <span className="text-lg font-bold text-slate-800 font-mono">{grandTotal}</span>
                     </div>
@@ -999,7 +1038,7 @@ export default function App() {
 
                   {/* Recharts Graphical Display */}
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8">
-                    <div className="lg:col-span-8 bg-white/50 backdrop-blur-sm p-3 sm:p-6 rounded-2xl border border-white/60 shadow-inner h-[280px] sm:h-[400px]" ref={chartRef}>
+                    <div className="lg:col-span-8 bg-white/50 p-3 sm:p-6 rounded-2xl border border-white/60 shadow-inner h-[280px] sm:h-[400px]" ref={chartRef}>
                       <Suspense fallback={<div className="w-full h-full flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>}>
                         <OverviewChart data={chartData} />
                       </Suspense>
@@ -1101,7 +1140,7 @@ export default function App() {
                   {/* Dynamic grid container */}
                   <div className="space-y-4 sm:space-y-6 flex-grow">
                     {filteredAgencies.length === 0 ? (
-                      <div className="text-center py-14 sm:py-20 px-3 border-2 border-dashed border-slate-200/80 rounded-2xl bg-white/30 backdrop-blur-xs">
+                      <div className="text-center py-14 sm:py-20 px-3 border-2 border-dashed border-slate-200/80 rounded-2xl bg-white/30">
                         <FolderOpen className="w-12 h-12 text-slate-400 mx-auto mb-3" />
                         <p className="text-slate-500 text-sm font-bold">Không tìm thấy dữ liệu ĐLTC phù hợp.</p>
                         <p className="text-slate-400 text-xs mt-1 max-w-sm mx-auto">
@@ -1142,7 +1181,7 @@ export default function App() {
 
         return (
           <div
-            className="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center backdrop-blur-md select-none touch-pan-y"
+            className="fixed inset-0 bg-slate-950/[0.97] z-50 flex items-center justify-center select-none touch-pan-y"
             onTouchStart={onLightboxTouchStart}
             onTouchEnd={onLightboxTouchEnd}
             onClick={closeLightbox}
@@ -1165,7 +1204,7 @@ export default function App() {
               </button>
             )}
 
-            <ZoomableImage key={currentImg} src={currentImg} onBackgroundClick={closeLightbox} />
+            <ZoomableImage key={currentImg} src={currentImg} placeholder={thumbUrl(currentImg)} onBackgroundClick={closeLightbox} />
 
             {totalImg > 1 && (
               <button
@@ -1177,7 +1216,7 @@ export default function App() {
               </button>
             )}
 
-            <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] sm:bottom-6 left-1/2 -translate-x-1/2 text-white/80 text-xs font-bold tracking-wide uppercase bg-slate-900/80 px-5 py-2 rounded-full backdrop-blur-sm shadow-xl border border-slate-700/60 font-mono">
+            <div className="absolute bottom-[max(1rem,env(safe-area-inset-bottom))] sm:bottom-6 left-1/2 -translate-x-1/2 text-white/80 text-xs font-bold tracking-wide uppercase bg-slate-900/80 px-5 py-2 rounded-full shadow-xl border border-slate-700/60 font-mono">
               {idx + 1} / {totalImg}
             </div>
           </div>
@@ -1191,7 +1230,7 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center backdrop-blur-sm"
+            className="fixed inset-0 bg-slate-950/85 z-50 flex items-center justify-center"
           >
             <div className="bg-white p-6 sm:p-8 rounded-3xl max-w-sm w-full text-center shadow-2xl border border-slate-100 mx-4">
               <Loader2 className="w-12 h-12 text-red-600 animate-spin mx-auto mb-4" />

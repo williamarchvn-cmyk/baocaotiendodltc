@@ -1,5 +1,4 @@
 import React, { memo, useState } from 'react';
-import { motion } from 'motion/react';
 import { Calendar, Plus, Trash2, X, HelpCircle, Clock, Briefcase, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { AgencyRow } from '../types';
 import { thumbUrl } from '../lib/imageUtils';
@@ -53,13 +52,9 @@ function AgencyCard({ row, pending, canEdit, readOnly, actions }: Props) {
   };
 
   return (
-    <motion.div
+    <div
       id={`row-${row.id}`}
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -15 }}
-      transition={{ duration: 0.2 }}
-      className="items-stretch grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 p-3.5 sm:p-6 bg-white/60 md:bg-white/50 md:backdrop-blur-md border border-white/80 rounded-2xl shadow-xs hover:shadow-xl hover:bg-white/70 transition-all duration-300"
+      className="agency-card card-enter items-stretch grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 p-3.5 sm:p-6 bg-white/60 border border-white/80 rounded-2xl shadow-xs hover:shadow-xl hover:bg-white/70 transition-[box-shadow,background-color] duration-300"
     >
       {/* Khu vực ảnh (trên máy tính nằm bên trái, trên điện thoại nằm dưới form) */}
       <div
@@ -146,7 +141,7 @@ function AgencyCard({ row, pending, canEdit, readOnly, actions }: Props) {
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => handleImageDrop(e, imgIdx)}
                   onClick={() => actions.openLightbox(row.id, imgIdx)}
-                  className={`relative aspect-square rounded-lg overflow-hidden border border-slate-200/80 group/img shadow-xs bg-white cursor-zoom-in sm:hover:scale-[1.03] transition-all duration-300 ${canEdit ? 'sm:cursor-grab active:opacity-70' : ''}`}
+                  className={`relative aspect-square rounded-lg overflow-hidden border border-slate-200/80 group/img shadow-xs bg-slate-100 cursor-zoom-in sm:hover:scale-[1.03] transition-transform duration-300 ${canEdit ? 'sm:cursor-grab active:opacity-70' : ''}`}
                 >
                   <img
                     src={thumbUrl(img)}
@@ -184,7 +179,7 @@ function AgencyCard({ row, pending, canEdit, readOnly, actions }: Props) {
               {/* Ảnh đang tải lên */}
               {pending.map((u) => (
                 <div key={u} className="relative aspect-square rounded-lg overflow-hidden border border-slate-200/80 bg-white shadow-xs">
-                  <img src={u} className="w-full h-full object-cover opacity-60" alt="Đang tải lên" />
+                  <img src={u} decoding="async" className="w-full h-full object-cover opacity-60" alt="Đang tải lên" />
                   <div className="absolute inset-0 flex items-center justify-center bg-white/40">
                     <Loader2 className="w-6 h-6 text-slate-600 animate-spin" />
                   </div>
@@ -293,7 +288,7 @@ function AgencyCard({ row, pending, canEdit, readOnly, actions }: Props) {
           )}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 

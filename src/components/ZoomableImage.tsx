@@ -1,8 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize2, Loader2 } from 'lucide-react';
 
 interface Props {
   src: string;
+  /** Ảnh thu nhỏ (thường đã có trong bộ nhớ trình duyệt) → hiện ngay trong lúc chờ ảnh nét. */
+  placeholder?: string;
   onBackgroundClick: () => void;
 }
 
@@ -17,9 +19,35 @@ interface View {
 }
 
 // Ảnh phóng to: lăn chuột / nút +/- / chụm 2 ngón / nhấp đúp để zoom, kéo để di chuyển khi đã zoom.
-export default function ZoomableImage({ src, onBackgroundClick }: Props) {
+// Kích thước khung hiển thị tối đa, giống ràng buộc max-w/max-h cũ của ảnh phóng to
+function maxBox() {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  return w >= 640 ? { w: w * 0.85, h: h * 0.85 } : { w: w - 8, h: h * 0.8 };
+}
+
+export default function ZoomableImage({ src, placeholder, onBackgroundClick }: Props) {
+  const [natural, setNatural] = useState<{ w: number; h: number; full: boolean } | null>(null);
+  const [fullLoaded, setFullLoaded] = useState(false);
+  const [thumbFailed, setThumbFailed] = useState(!placeholder || placeholder === src);
+  const [box, setBox] = useState(maxBox);
+
+  useEffect(() => {
+    const onResize = () => setBox(maxBox());
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  // Kích thước hiển thị: vừa khung; ảnh nét thì không phóng to quá kích thước thật (như trước)
+  let size: { w: number; h: number } | null = null;
+  if (natural) {
+    let k = Math.min(box.w / natural.w, box.h / natural.h);
+    if (natural.full) k = Math.min(1, k);
+    size = { w: Math.round(natural.w * k), h: Math.round(natural.h * k) };
+  }
+
   const surfaceRef = useRef<HTMLDivElement>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
+  const imgRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<View>({ s: 1, x: 0, y: 0 });
   const viewRef = useRef(view);
   viewRef.current = view;
@@ -188,7 +216,7 @@ export default function ZoomableImage({ src, onBackgroundClick }: Props) {
     }
     lastTap.current = { t: now, x: e.clientX, y: e.clientY };
     // Nhấp ra ngoài ảnh (khi chưa zoom) → đóng
-    const onImage = e.target === imgRef.current;
+    const onImage = !!imgRef.current && imgRef.current.contains(e.target as Node);
     if (!onImage && viewRef.current.s <= 1.01) {
       const t = window.setTimeout(() => {
         if (lastTap.current && lastTap.current.t === now) onBackgroundClick();
@@ -220,23 +248,56 @@ export default function ZoomableImage({ src, onBackgroundClick }: Props) {
         onTouchEnd={stopSwipeIfNeeded}
         onClick={(e) => e.stopPropagation()}
       >
-        <img
+        <div
           ref={imgRef}
-          src={src}
-          crossOrigin="anonymous"
-          draggable={false}
-          className="max-w-full max-h-[80dvh] sm:max-h-[85dvh] sm:max-w-[85vw] object-contain rounded-xl shadow-2xl border border-white/10 select-none"
+          className="relative rounded-xl shadow-2xl border border-white/10 overflow-hidden bg-slate-900"
           style={{
+            width: size?.w ?? 0,
+            height: size?.h ?? 0,
+            visibility: size ? 'visible' : 'hidden',
             transform: `translate(${view.x}px, ${view.y}px) scale(${view.s})`,
             transition: dragging ? 'none' : 'transform 0.15s ease-out',
-            willChange: 'transform'
+            willChange: view.s > 1 ? 'transform' : undefined
           }}
-          alt="Ảnh phóng to"
-        />
+        >
+          {!thumbFailed && !fullLoaded && (
+            <img
+              src={placeholder}
+              crossOrigin="anonymous"
+              draggable={false}
+              className="absolute inset-0 w-full h-full object-contain select-none pointer-events-none"
+              onLoad={(e) => {
+                const t = e.currentTarget;
+                setNatural((cur) => cur ?? { w: t.naturalWidth, h: t.naturalHeight, full: false });
+              }}
+              onError={() => setThumbFailed(true)}
+              alt=""
+            />
+          )}
+          <img
+            src={src}
+            crossOrigin="anonymous"
+            decoding="async"
+            draggable={false}
+            className="absolute inset-0 w-full h-full object-contain select-none pointer-events-none transition-opacity duration-200"
+            style={{ opacity: fullLoaded ? 1 : 0 }}
+            onLoad={(e) => {
+              const t = e.currentTarget;
+              setNatural({ w: t.naturalWidth, h: t.naturalHeight, full: true });
+              setFullLoaded(true);
+            }}
+            alt="Ảnh phóng to"
+          />
+        </div>
+        {!fullLoaded && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <Loader2 className="w-8 h-8 text-white/70 animate-spin" />
+          </div>
+        )}
       </div>
 
       <div
-        className="absolute top-[max(0.75rem,env(safe-area-inset-top))] left-3 sm:top-6 sm:left-6 z-50 flex items-center gap-1 bg-white/10 border border-white/10 rounded-full p-1 backdrop-blur-sm"
+        className="absolute top-[max(0.75rem,env(safe-area-inset-top))] left-3 sm:top-6 sm:left-6 z-50 flex items-center gap-1 bg-white/10 border border-white/10 rounded-full p-1"
         onClick={(e) => e.stopPropagation()}
         onPointerDown={(e) => e.stopPropagation()}
         onTouchStart={(e) => e.stopPropagation()}
