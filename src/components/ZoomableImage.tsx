@@ -62,7 +62,6 @@ export default function ZoomableImage({ src, placeholder, onBackgroundClick }: P
     startCy: number;
     moved: boolean;
   } | null>(null);
-  const lastTap = useRef<{ t: number; x: number; y: number } | null>(null);
   const blockSwipe = useRef(false);
 
   const clamp = useCallback((v: View): View => {
@@ -201,27 +200,18 @@ export default function ZoomableImage({ src, placeholder, onBackgroundClick }: P
     gesture.current = null;
 
     if (wasMoved || wasMulti) {
-      lastTap.current = null;
       return;
     }
 
-    // Chạm / nhấp đơn giản
-    const now = Date.now();
-    const prev = lastTap.current;
-    if (prev && now - prev.t < 320 && Math.hypot(e.clientX - prev.x, e.clientY - prev.y) < 30) {
-      lastTap.current = null;
+    // Chạm / nhấp đơn giản. (Dùng toạ độ vì pointer capture khiến e.target luôn là khung ngoài.)
+    const r = imgRef.current?.getBoundingClientRect();
+    const onImage = !!r && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+    if (onImage) {
+      // Bấm vào ảnh: phóng to tại điểm bấm; đang phóng to thì bấm để về 100%
       if (viewRef.current.s > 1.01) reset();
       else zoomAt(DOUBLE_TAP_SCALE, e.clientX, e.clientY);
-      return;
-    }
-    lastTap.current = { t: now, x: e.clientX, y: e.clientY };
-    // Nhấp ra ngoài ảnh (khi chưa zoom) → đóng
-    const onImage = !!imgRef.current && imgRef.current.contains(e.target as Node);
-    if (!onImage && viewRef.current.s <= 1.01) {
-      const t = window.setTimeout(() => {
-        if (lastTap.current && lastTap.current.t === now) onBackgroundClick();
-      }, 330);
-      void t;
+    } else if (viewRef.current.s <= 1.01) {
+      onBackgroundClick(); // bấm ra ngoài ảnh → đóng
     }
   };
 
