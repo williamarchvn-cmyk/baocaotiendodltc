@@ -6,6 +6,7 @@ import { AppData, AgencyRow, TabConfig, TabId, UnitId } from './types';
 import { calculateElapsedDays, todayLocalISO } from './lib/dateUtils';
 import { useAuth } from './hooks/useAuth';
 import LoginModal from './components/LoginModal';
+import ZoomableImage from './components/ZoomableImage';
 import AgencyCard, { CardActions, EditableField, MAX_IMAGES } from './components/AgencyCard';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -1164,14 +1165,7 @@ export default function App() {
               </button>
             )}
 
-            <div className="max-w-[100vw] sm:max-w-[85vw] max-h-[80dvh] sm:max-h-[85dvh] flex items-center justify-center px-1" onClick={(e) => e.stopPropagation()}>
-              <img
-                src={currentImg}
-                crossOrigin="anonymous"
-                className="max-w-full max-h-[80dvh] sm:max-h-[85dvh] object-contain rounded-xl shadow-2xl border border-white/10"
-                alt="Ảnh phóng to"
-              />
-            </div>
+            <ZoomableImage key={currentImg} src={currentImg} onBackgroundClick={closeLightbox} />
 
             {totalImg > 1 && (
               <button
